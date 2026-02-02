@@ -389,7 +389,7 @@
         let food = {};
         let direction = 'right';
         let nextDirection = 'right';
-        let gameSpeed = 150; // 默认速度：较快
+        let gameSpeed = 500; // 默认速度：慢速
         let gameInterval;
         let score = 0;
         let highScore = localStorage.getItem('snakeHighScore') || 0;
@@ -398,14 +398,14 @@
         
         // 速度档位定义（毫秒）
         const SPEEDS = {
-            SLOW: 250,      // 慢速
-            MEDIUM: 180,    // 中等
-            FAST: 150,      // 较快（默认）
-            VERY_FAST: 100  // 快速
+            SLOW: 500,      // 慢速（默认）
+            MEDIUM: 350,    // 中等
+            FAST: 250,      // 较快
+            VERY_FAST: 150  // 快速
         };
         
         // 当前速度档位
-        let currentSpeed = 'FAST';
+        let currentSpeed = 'SLOW';
         
         // 初始化最高分显示
         highScoreElement.textContent = highScore;
@@ -451,14 +451,14 @@
             const rand = Math.random();
             let foodType;
             
-            if (rand < 0.1) {
-                foodType = foodTypes[0]; // 苹果 10% 概率（分值最高）
-            } else if (rand < 0.3) {
-                foodType = foodTypes[1]; // 披萨 20% 概率
+            if (rand < 0.3) {
+                foodType = foodTypes[0]; // 苹果 30% 概率（分值最高）
             } else if (rand < 0.6) {
-                foodType = foodTypes[2]; // 甜甜圈 30% 概率
+                foodType = foodTypes[1]; // 披萨 30% 概率
+            } else if (rand < 0.8) {
+                foodType = foodTypes[2]; // 甜甜圈 20% 概率
             } else {
-                foodType = foodTypes[3]; // 冰淇淋 40% 概率（分值最低）
+                foodType = foodTypes[3]; // 冰淇淋 20% 概率（分值最低）
             }
             
             // 确保食物不会出现在蛇身上
