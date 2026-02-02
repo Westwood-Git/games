@@ -1,4 +1,4 @@
-## Hi there 👋
+Mechanics at JSUT
 
 <!--
 **mech-jsut/mech-jsut** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
