@@ -254,6 +254,41 @@
             margin-right: 5px;
         }
         
+        /* 移动端控制按钮 */
+        .mobile-controls {
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        .mobile-control-row {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        
+        .direction-btn {
+            width: 70px;
+            height: 70px;
+            font-size: 30px;
+            background-color: #06d6a0;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            margin: 0 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        
+        .direction-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+            background-color: #05b387;
+        }
+        
         @media (max-width: 768px) {
             .game-container {
                 padding: 15px;
@@ -285,6 +320,12 @@
                 padding: 10px 20px;
                 font-size: 1.1rem;
             }
+            
+            .direction-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 25px;
+            }
         }
         
         .food-points {
@@ -302,6 +343,17 @@
             padding: 8px 15px;
             border-radius: 20px;
             font-weight: bold;
+        }
+        
+        .mobile-control-hint {
+            font-size: 1.1rem;
+            color: #333;
+            text-align: center;
+            margin-top: 10px;
+            background-color: #e8f4ff;
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 2px solid #118ab2;
         }
     </style>
 </head>
@@ -333,8 +385,6 @@
             </div>
         </div>
         
-
-        
         <div class="controls">
             <div class="action-buttons">
                 <button class="action-btn" id="startBtn">开始游戏</button>
@@ -342,18 +392,30 @@
                 <button class="action-btn" id="restartBtn">重新开始</button>
             </div>
 
-        <div class="speed-controls">
-            <div class="speed-label">选择游戏速度:</div>
-            <div class="speed-buttons">
-                <button class="speed-btn active" id="slowSpeed">慢速</button>
-                <button class="speed-btn" id="mediumSpeed">中等</button>
-                <button class="speed-btn" id="fastSpeed">较快</button>
-                <button class="speed-btn" id="veryFastSpeed">快速</button>
-            </div>
-        </div>            
+            <div class="speed-controls">
+                <div class="speed-label">选择游戏速度:</div>
+                <div class="speed-buttons">
+                    <button class="speed-btn active" id="slowSpeed">慢速</button>
+                    <button class="speed-btn" id="mediumSpeed">中等</button>
+                    <button class="speed-btn" id="fastSpeed">较快</button>
+                    <button class="speed-btn" id="veryFastSpeed">快速</button>
+                </div>
+            </div>            
             
+            <!-- 移动端控制按钮 -->
+            <div class="mobile-controls" id="mobileControls" style="display: none;">
+                <div class="mobile-control-hint">触控方向按钮控制小蛇</div>
+                <div class="mobile-control-row">
+                    <button class="direction-btn" data-direction="up">↑</button>
+                </div>
+                <div class="mobile-control-row">
+                    <button class="direction-btn" data-direction="left">←</button>
+                    <button class="direction-btn" data-direction="down">↓</button>
+                    <button class="direction-btn" data-direction="right">→</button>
+                </div>
+            </div>
 
-            <div class="control-hint">
+            <div class="control-hint" id="keyboardHint">
                 使用键盘方向键 ↑ ↓ ← → 控制小蛇移动
             </div>
         </div>
@@ -383,6 +445,8 @@
         const highScoreElement = document.getElementById('highScore');
         const gameOverScreen = document.getElementById('gameOverScreen');
         const finalScoreElement = document.getElementById('finalScore');
+        const mobileControls = document.getElementById('mobileControls');
+        const keyboardHint = document.getElementById('keyboardHint');
         
         // 游戏元素
         let snake = [];
@@ -406,6 +470,19 @@
         
         // 当前速度档位
         let currentSpeed = 'SLOW';
+        
+        // 检测是否是移动设备
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+        
+        // 初始化移动端控制
+        function initMobileControls() {
+            if (isMobileDevice()) {
+                mobileControls.style.display = 'block';
+                keyboardHint.innerHTML = '使用键盘方向键或触控按钮控制小蛇';
+            }
+        }
         
         // 初始化最高分显示
         highScoreElement.textContent = highScore;
@@ -432,8 +509,7 @@
             
             // 重置游戏状态
             direction = 'right';
-            nextDirection = 'right';
-            score = 0;
+            nextDirection = 'right'; // 修复：确保下次移动方向也被重置
             
             // 应用当前速度
             gameSpeed = SPEEDS[currentSpeed];
@@ -748,6 +824,9 @@
             gamePaused = false;
             document.getElementById('pauseBtn').textContent = '暂停';
             gameOverScreen.style.display = 'none';
+            
+            // 修复：重置方向控制变量
+            nextDirection = 'right'; // 确保下次移动方向也被重置
         }
         
         // 改变方向
@@ -921,8 +1000,26 @@
             }
         });
         
+        // 移动端方向按钮控制
+        document.querySelectorAll('.direction-btn').forEach(btn => {
+            // 触摸事件
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const direction = e.target.getAttribute('data-direction');
+                changeDirection(direction);
+            });
+            
+            // 鼠标事件（为桌面端测试）
+            btn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                const direction = e.target.getAttribute('data-direction');
+                changeDirection(direction);
+            });
+        });
+        
         // 初始化游戏（但不开始）
         initGame();
+        initMobileControls();
         
         // 添加一些初始提示
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
