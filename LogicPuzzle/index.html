@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>拼图解谜器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            width: 100%;
+            max-width: 500px;
+            margin-top: 10px;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+            line-height: 1.3;
+        }
+        
+        .puzzle-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            color: #444;
+            margin-bottom: 12px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 8px;
+            text-align: center;
+        }
+        
+        .puzzle-wrapper {
+            position: relative;
+            width: fit-content;
+            margin: 15px auto;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        
+        .puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 1px;
+            background: #ddd;
+            border: 2px solid #333;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+            touch-action: none;
+        }
+        
+        .grid-cell {
+            width: min(8vw, 40px);
+            height: min(8vw, 40px);
+            background: white;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        @media (max-width: 360px) {
+            .grid-cell {
+                width: 7.5vw;
+                height: 7.5vw;
+            }
+        }
+        
+        .grid-cell:active {
+            background: #f0f0f0;
+            transform: scale(0.95);
+        }
+        
+        .grid-cell.selected {
+            background: #808080;
+        }
+        
+        .grid-cell.selected::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 2px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 14px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 120px;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-solve {
+            background: linear-gradient(45deg, #5AC8FA, #007AFF);
+            color: white;
+        }
+        
+        .btn-solve:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-solve:disabled:active {
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-reset {
+            background: linear-gradient(45deg, #FF3B30, #FF2D55);
+            color: white;
+        }
+        
+        .instructions {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            font-size: 14px;
+        }
+        
+        .instructions h3 {
+            color: #856404;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .instructions ul {
+            padding-left: 18px;
+            color: #856404;
+        }
+        
+        .instructions li {
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        
+        .counter {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 15px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .error {
+            color: #ff3b30;
+            text-align: center;
+            margin-top: 10px;
+            font-weight: 500;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 5px;
+            border-left: 4px solid #ff3b30;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .hint {
+            color: #666;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 5px;
+            padding: 0 10px;
+        }
+        
+        .block-overlay {
+            position: absolute;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-sizing: border-box;
+            pointer-events: none;
+            z-index: 3;
+            border-radius: 3px;
+            box-shadow: 
+                inset 0 0 8px rgba(255, 255, 255, 0.3),
+                0 1px 4px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+        
+        .initial-block-overlay {
+            position: absolute;
+            background: #505050;
+            border: 2px solid #333;
+            box-sizing: border-box;
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0.9;
+            border-radius: 3px;
+            box-shadow: 
+                inset 0 0 6px rgba(0, 0, 0, 0.3),
+                0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+        
+        .grid-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #e0e0e0;
+            border: 2px solid #333;
+            border-radius: 4px;
+            z-index: 0;
+        }
+        
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #4CAF50, #8BC34A);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            animation: slideIn 0.5s ease-out;
+            z-index: 1000;
+            display: none;
+            max-width: calc(100vw - 40px);
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @media (max-height: 700px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.6em;
+                margin-bottom: 15px;
+            }
+            
+            .grid-cell {
+                width: min(8.5vw, 38px);
+                height: min(8.5vw, 38px);
+            }
+            
+            .btn {
+                padding: 12px 20px;
+                min-width: 110px;
+            }
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 0 5px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .status-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .size-3 { background: #666; }
+        .size-2 { background: #888; }
+        .size-1 { background: #aaa; }
+        
+        .quick-guide {
+            background: #e8f4fd;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 13px;
+            color: #2c5282;
+            border-left: 3px solid #4299e1;
+        }
+        
+        .quick-guide p {
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="success-message" id="successMessage">✅ 求解成功！</div>
+
+    <div class="container">
+        <h1>拼图解谜器</h1>
+        
+
+        
+        <div class="puzzle-section">
+
+            
+
+            <div class="puzzle-wrapper" id="puzzleWrapper">
+                <div class="grid-background"></div>
+                <div id="puzzleGrid" class="puzzle-grid"></div>
+            </div>
+            <div class="counter" id="counter">已选择：0/6</div>
+            <div class="hint" id="hint">点击格子选择初始灰色位置</div>
+            <div class="error" id="errorMessage" style="display: none;"></div>
+        </div>
+        
+        <div class="controls">
+            <button id="solveBtn" class="btn btn-solve" disabled> 求解</button>
+            <button id="resetBtn" class="btn btn-reset"> 重置</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>游戏说明</h3>
+            <ul>
+                <li>这是一个8×8的拼图解谜游戏</li>
+                <li>点击选择6个初始灰色位置（必须包含3格、2格、1格各一个）</li>
+                <li>形状可以横向或纵向摆放</li>
+                <li>再次点击已选择的方块可以取消选择</li>
+                <li>程序会自动将8个彩色积木块放置在剩余位置</li>
+                <li>点击"求解"在原位置显示均匀的整体块</li>
+                <li>点击"重置"重新开始游戏</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const GRID_SIZE = 8;
+        const CELL_SIZE = 40;
+        const GRID_GAP = 1;
+        const INITIAL_CELLS_NEEDED = 6;
+        
+        const BLOCKS = [
+            { name: "Blue2", color: "#0A8CFA", size: [4, 3] },
+            { name: "Yellow2", color: "#FFDF0A", size: [5, 2] },
+            { name: "Red1", color: "#FF3B30", size: [3, 3] },
+            { name: "Yellow1", color: "#FFD60A", size: [4, 2] },
+            { name: "Red2", color: "#FF453A", size: [3, 2] },
+            { name: "White1", color: "#FFFFFF", size: [2, 2] },
+            { name: "Blue1", color: "#0A84FF", size: [5, 1] },
+            { name: "White2", color: "#FFFFF7", size: [4, 1] }
+        ];
+        
+        let gameState = {
+            grid: Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0)),
+            selectedPositions: [],
+            initialBlocks: [],
+            solution: null,
+            overlays: []
+        };
+        
+        function initializeGame() {
+            createPuzzleGrid();
+            setupEventListeners();
+            updateCounter();
+        }
+        
+        function createPuzzleGrid() {
+            const gridContainer = document.getElementById('puzzleGrid');
+            gridContainer.innerHTML = '';
+            
+            const cellSize = Math.min(window.innerWidth * 0.08, 40);
+            
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    
+                    cell.style.width = `${cellSize}px`;
+                    cell.style.height = `${cellSize}px`;
+                    
+                    gridContainer.appendChild(cell);
+                }
+            }
+        }
+        
+        function setupEventListeners() {
+            document.querySelectorAll('#puzzleGrid .grid-cell').forEach(cell => {
+                cell.addEventListener('click', handleCellClick);
+                cell.addEventListener('touchstart', handleCellTouch, { passive: false });
+            });
+            
+            document.getElementById('solveBtn').addEventListener('click', solvePuzzle);
+            document.getElementById('resetBtn').addEventListener('click', resetGame);
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    resetGame();
+                } else if (e.key === 'Enter' && !document.getElementById('solveBtn').disabled) {
+                    solvePuzzle();
+                }
+            });
+            
+            window.addEventListener('resize', adjustGridSize);
+        }
+        
+        function handleCellTouch(event) {
+            event.preventDefault();
+            const cell = event.target;
+            if (cell.classList.contains('grid-cell')) {
+                handleCellClick({ target: cell });
+            }
+        }
+        
+        function handleCellClick(event) {
+            const row = parseInt(event.target.dataset.row);
+            const col = parseInt(event.target.dataset.col);
+            
+            const existingIndex = gameState.selectedPositions.findIndex(pos => 
+                pos[0] === row && pos[1] === col
+            );
+            
+            if (existingIndex >= 0) {
+                gameState.grid[row][col] = 0;
+                gameState.selectedPositions.splice(existingIndex, 1);
+                event.target.classList.remove('selected');
+            } else {
+                if (gameState.selectedPositions.length >= INITIAL_CELLS_NEEDED) {
+                    showError('最多只能选择6个初始方块！');
+                    return;
+                }
+                
+                gameState.grid[row][col] = 1;
+                gameState.selectedPositions.push([row, col]);
+                event.target.classList.add('selected');
+            }
+            
+            updateCounter();
+            hideError();
+            
+            if (gameState.selectedPositions.length === INITIAL_CELLS_NEEDED) {
+                const validation = validateInitialPositions();
+                if (validation.valid) {
+                    document.getElementById('solveBtn').disabled = false;
+                    updateHint(`✅ 验证通过：已正确选择3格、2格、1格各一个`);
+                } else {
+                    showError(validation.message);
+                    document.getElementById('solveBtn').disabled = true;
+                }
+            } else {
+                document.getElementById('solveBtn').disabled = true;
+                updateHint(`需要包含：3格、2格、1格各一个 (已选${gameState.selectedPositions.length}/6)`);
+            }
+        }
+        
+        function updateCounter() {
+            document.getElementById('counter').textContent = 
+                `已选择：${gameState.selectedPositions.length}/${INITIAL_CELLS_NEEDED}`;
+        }
+        
+        function updateHint(message) {
+            const hintEl = document.getElementById('hint');
+            hintEl.textContent = message;
+            hintEl.style.color = message.startsWith('✅') ? '#4CAF50' : '#666';
+            hintEl.style.fontWeight = message.startsWith('✅') ? '600' : 'normal';
+        }
+        
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+        
+        function hideError() {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.style.display = 'none';
+        }
+        
+        function showSuccess(message) {
+            const successEl = document.getElementById('successMessage');
+            successEl.textContent = message;
+            successEl.style.display = 'block';
+            setTimeout(() => {
+                successEl.style.display = 'none';
+            }, 3000);
+        }
+        
+        function validateInitialPositions() {
+            if (gameState.selectedPositions.length !== 6) {
+                return { valid: false, message: '需要选择6个方块' };
+            }
+            
+            const positions = new Set();
+            gameState.selectedPositions.forEach(pos => {
+                positions.add(`${pos[0]},${pos[1]}`);
+            });
+            
+            const result = findBlocks([3, 2, 1], positions);
+            
+            if (result.found) {
+                gameState.initialBlocks = result.blocks.map(block => block.coords);
+                return { 
+                    valid: true, 
+                    message: '验证通过！',
+                    blocks: result.blocks
+                };
+            } else {
+                return { 
+                    valid: false, 
+                    message: '需要3格、2格、1格各一个（可横可竖）' 
+                };
+            }
+        }
+        
+        function findBlocks(targetSizes, positions) {
+            const posArray = Array.from(positions).map(str => {
+                const [x, y] = str.split(',').map(Number);
+                return { x, y, key: str };
+            });
+            
+            const sortedSizes = [...targetSizes].sort((a, b) => b - a);
+            const result = backtrackFindBlocks(new Set(), sortedSizes, posArray, []);
+            return result;
+        }
+        
+        function backtrackFindBlocks(usedPositions, remainingSizes, availablePositions, currentBlocks) {
+            if (remainingSizes.length === 0) {
+                return { found: true, blocks: currentBlocks };
+            }
+            
+            const currentSize = remainingSizes[0];
+            
+            for (let i = 0; i < availablePositions.length; i++) {
+                const startPos = availablePositions[i];
+                
+                if (usedPositions.has(startPos.key)) continue;
+                
+                if (currentSize > 1) {
+                    const horizontalBlock = tryFormBlock(startPos, currentSize, 'horizontal', usedPositions, availablePositions);
+                    if (horizontalBlock) {
+                        const newUsedPositions = new Set(usedPositions);
+                        const newBlocks = [...currentBlocks, horizontalBlock];
+                        
+                        horizontalBlock.positions.forEach(pos => newUsedPositions.add(pos));
+                        
+                        const result = backtrackFindBlocks(
+                            newUsedPositions,
+                            remainingSizes.slice(1),
+                            availablePositions,
+                            newBlocks
+                        );
+                        
+                        if (result.found) {
+                            return result;
+                        }
+                    }
+                    
+                    const verticalBlock = tryFormBlock(startPos, currentSize, 'vertical', usedPositions, availablePositions);
+                    if (verticalBlock) {
+                        const newUsedPositions = new Set(usedPositions);
+                        const newBlocks = [...currentBlocks, verticalBlock];
+                        
+                        verticalBlock.positions.forEach(pos => newUsedPositions.add(pos));
+                        
+                        const result = backtrackFindBlocks(
+                            newUsedPositions,
+                            remainingSizes.slice(1),
+                            availablePositions,
+                            newBlocks
+                        );
+                        
+                        if (result.found) {
+                            return result;
+                        }
+                    }
+                }
+                
+                if (currentSize === 1 && !usedPositions.has(startPos.key)) {
+                    const singleBlock = {
+                        size: 1,
+                        positions: [startPos.key],
+                        coords: [startPos.x, startPos.y, startPos.x, startPos.y],
+                        direction: 'single'
+                    };
+                    
+                    const newUsedPositions = new Set(usedPositions);
+                    newUsedPositions.add(startPos.key);
+                    const newBlocks = [...currentBlocks, singleBlock];
+                    
+                    const result = backtrackFindBlocks(
+                        newUsedPositions,
+                        remainingSizes.slice(1),
+                        availablePositions,
+                        newBlocks
+                    );
+                    
+                    if (result.found) {
+                        return result;
+                    }
+                }
+            }
+            
+            return { found: false, blocks: [] };
+        }
+        
+        function tryFormBlock(startPos, size, direction, usedPositions, availablePositions) {
+            const positions = [];
+            
+            for (let i = 0; i < size; i++) {
+                let x, y;
+                if (direction === 'horizontal') {
+                    x = startPos.x;
+                    y = startPos.y + i;
+                } else {
+                    x = startPos.x + i;
+                    y = startPos.y;
+                }
+                
+                const key = `${x},${y}`;
+                
+                if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) {
+                    return null;
+                }
+                
+                const isAvailable = availablePositions.some(p => p.key === key);
+                if (!isAvailable || usedPositions.has(key)) {
+                    return null;
+                }
+                
+                positions.push(key);
+            }
+            
+            const endX = direction === 'horizontal' ? startPos.x : startPos.x + size - 1;
+            const endY = direction === 'horizontal' ? startPos.y + size - 1 : startPos.y;
+            
+            return {
+                size,
+                positions,
+                coords: [startPos.x, startPos.y, endX, endY],
+                direction
+            };
+        }
+        
+        function findZeroBlocks(grid, m, n) {
+            const rows = grid.length;
+            const cols = grid[0].length;
+            const result = [];
+            const possibleShapes = m === n ? [[m, n]] : [[m, n], [n, m]];
+            
+            for (let x0 = 0; x0 < rows; x0++) {
+                for (let y0 = 0; y0 < cols; y0++) {
+                    for (const [dx, dy] of possibleShapes) {
+                        const x1 = x0 + dx - 1;
+                        const y1 = y0 + dy - 1;
+                        
+                        if (x1 >= rows || y1 >= cols) continue;
+                        
+                        let allZero = true;
+                        for (let i = x0; i <= x1; i++) {
+                            for (let j = y0; j <= y1; j++) {
+                                if (grid[i][j] !== 0) {
+                                    allZero = false;
+                                    break;
+                                }
+                            }
+                            if (!allZero) break;
+                        }
+                        
+                        if (allZero) {
+                            result.push([[x0, y0], [x1, y1]]);
+                        }
+                    }
+                }
+            }
+            
+            return result;
+        }
+        
+        function placeBlocksRecursively(grid, blocks, blockIndex = 0, placement = []) {
+            if (blockIndex === blocks.length) {
+                const allFilled = grid.every(row => row.every(cell => cell === 1));
+                return allFilled ? placement : null;
+            }
+            
+            const blockName = blocks[blockIndex].name;
+            const [m, n] = blocks[blockIndex].size;
+            const positions = findZeroBlocks(grid, m, n);
+            
+            positions.sort((a, b) => {
+                const scoreA = a[0][0] + a[0][1];
+                const scoreB = b[0][0] + b[0][1];
+                return scoreA - scoreB;
+            });
+            
+            for (const [[x0, y0], [x1, y1]] of positions) {
+                const original = [];
+                for (let i = x0; i <= x1; i++) {
+                    original[i - x0] = [];
+                    for (let j = y0; j <= y1; j++) {
+                        original[i - x0][j - y0] = grid[i][j];
+                        grid[i][j] = 1;
+                    }
+                }
+                
+                const result = placeBlocksRecursively(
+                    grid.map(row => [...row]),
+                    blocks,
+                    blockIndex + 1,
+                    [...placement, [blockName, [x0, y0], [x1, y1]]]
+                );
+                
+                if (result) return result;
+                
+                for (let i = x0; i <= x1; i++) {
+                    for (let j = y0; j <= y1; j++) {
+                        grid[i][j] = original[i - x0][j - y0];
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        function solvePuzzle() {
+            const gridCopy = gameState.grid.map(row => [...row]);
+            
+            const solveBtn = document.getElementById('solveBtn');
+            const originalText = solveBtn.textContent;
+            solveBtn.textContent = '⏳ 计算中...';
+            solveBtn.disabled = true;
+            
+            setTimeout(() => {
+                const solution = placeBlocksRecursively(gridCopy, BLOCKS);
+                
+                if (solution) {
+                    gameState.solution = solution;
+                    displaySolutionAsUniformBlocks();
+                    showSuccess('✅ 求解成功！');
+                } else {
+                    showError('无解！请尝试不同的初始配置。');
+                }
+                
+                solveBtn.textContent = originalText;
+                solveBtn.disabled = false;
+            }, 50);
+        }
+        
+        function displaySolutionAsUniformBlocks() {
+            clearOverlays();
+            const wrapper = document.getElementById('puzzleWrapper');
+            
+            drawInitialBlocks();
+            drawSolutionBlocks();
+            hideOriginalGridSelection();
+        }
+        
+        function clearOverlays() {
+            const wrapper = document.getElementById('puzzleWrapper');
+            wrapper.querySelectorAll('.block-overlay, .initial-block-overlay').forEach(el => {
+                wrapper.removeChild(el);
+            });
+            gameState.overlays = [];
+        }
+        
+        function drawInitialBlocks() {
+            const wrapper = document.getElementById('puzzleWrapper');
+            const cellSize = Math.min(window.innerWidth * 0.08, 40);
+            
+            gameState.initialBlocks.forEach((block, index) => {
+                const [x0, y0, x1, y1] = block;
+                const width = y1 - y0 + 1;
+                const height = x1 - x0 + 1;
+                
+                const left = y0 * (cellSize + GRID_GAP) + GRID_GAP;
+                const top = x0 * (cellSize + GRID_GAP) + GRID_GAP;
+                const overlayWidth = width * cellSize + (width - 1) * GRID_GAP;
+                const overlayHeight = height * cellSize + (height - 1) * GRID_GAP;
+                
+                const overlay = document.createElement('div');
+                overlay.className = 'initial-block-overlay';
+                overlay.style.left = left + 'px';
+                overlay.style.top = top + 'px';
+                overlay.style.width = overlayWidth + 'px';
+                overlay.style.height = overlayHeight + 'px';
+                
+                wrapper.appendChild(overlay);
+                gameState.overlays.push(overlay);
+            });
+        }
+        
+        function drawSolutionBlocks() {
+            const wrapper = document.getElementById('puzzleWrapper');
+            const cellSize = Math.min(window.innerWidth * 0.08, 40);
+            
+            const colorMap = {};
+            BLOCKS.forEach(block => {
+                colorMap[block.name] = block.color;
+            });
+            
+            gameState.solution.forEach(([blockName, [x0, y0], [x1, y1]]) => {
+                const width = y1 - y0 + 1;
+                const height = x1 - x0 + 1;
+                
+                const left = y0 * (cellSize + GRID_GAP) + GRID_GAP;
+                const top = x0 * (cellSize + GRID_GAP) + GRID_GAP;
+                const overlayWidth = width * cellSize + (width - 1) * GRID_GAP;
+                const overlayHeight = height * cellSize + (height - 1) * GRID_GAP;
+                
+                const overlay = document.createElement('div');
+                overlay.className = 'block-overlay';
+                overlay.style.left = left + 'px';
+                overlay.style.top = top + 'px';
+                overlay.style.width = overlayWidth + 'px';
+                overlay.style.height = overlayHeight + 'px';
+                overlay.style.backgroundColor = colorMap[blockName];
+                
+                wrapper.appendChild(overlay);
+                gameState.overlays.push(overlay);
+            });
+        }
+        
+        function hideOriginalGridSelection() {
+            const grid = document.getElementById('puzzleGrid');
+            grid.querySelectorAll('.grid-cell').forEach(cell => {
+                cell.classList.remove('selected');
+                cell.style.backgroundColor = '';
+                cell.style.opacity = '0.3';
+            });
+        }
+        
+        function resetGame() {
+            gameState = {
+                grid: Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0)),
+                selectedPositions: [],
+                initialBlocks: [],
+                solution: null,
+                overlays: []
+            };
+            
+            clearOverlays();
+            
+            const grid = document.getElementById('puzzleGrid');
+            grid.querySelectorAll('.grid-cell').forEach(cell => {
+                cell.classList.remove('selected');
+                cell.style.backgroundColor = '';
+                cell.style.opacity = '1';
+            });
+            
+            document.getElementById('solveBtn').disabled = true;
+            updateCounter();
+            hideError();
+            updateHint('点击格子选择初始灰色位置');
+        }
+        
+        function adjustGridSize() {
+            const cells = document.querySelectorAll('.grid-cell');
+            const cellSize = Math.min(window.innerWidth * 0.08, 40);
+            
+            cells.forEach(cell => {
+                cell.style.width = `${cellSize}px`;
+                cell.style.height = `${cellSize}px`;
+            });
+            
+            clearOverlays();
+            
+            if (gameState.solution) {
+                displaySolutionAsUniformBlocks();
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', initializeGame);
+    </script>
+</body>
+</html>

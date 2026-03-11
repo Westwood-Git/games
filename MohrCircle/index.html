@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二向应力状态分析</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>二向应力状态分析</h1>
+        </header>
+        
+        <div class="content">
+            <div class="input-section">
+                <h2 class="section-title"><i class="fas fa-calculator"></i> 输入参数</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">X方向正应力 σₓ (MPa)</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="sigmaX" value="80" step="any">
+                        <span class="unit">MPa</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Y方向正应力 σᵧ (MPa)</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="sigmaY" value="-40" step="any">
+                        <span class="unit">MPa</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">切应力 τₓᵧ (MPa)</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="tauXY" value="-60" step="any">
+                        <span class="unit">MPa</span>
+                    </div>
+                </div>
+  
+
+<div class="form-group">
+    <label class="form-label">截面角度 θ (°)</label>
+    <div class="angle-control-group">
+        <div class="angle-input">
+            <input type="number" id="angleInput" value="22.5" step="0.1">
+            <span class="unit">°</span>
+        </div>
+        <div class="angle-btn-group">
+            <button class="angle-btn" id="decreaseAngle"><i class="fas fa-minus"></i></button>
+            <button class="angle-btn" id="increaseAngle"><i class="fas fa-plus"></i></button>
+        </div>
+    </div>
+    
+    <!-- 新增：常用角度预设按钮 -->
+    <div class="preset-buttons">
+        <button class="preset-btn" data-angle="0">0°</button>
+        <button class="preset-btn" data-angle="22.5">22.5°</button>
+        <button class="preset-btn" data-angle="45">45°</button>
+        <button class="preset-btn" data-angle="90">90°</button>
+        
+    </div>
+    
+    <div class="slider-container">
+        <input type="range" id="angleSlider" min="-180" max="180" value="22.5" step="0.5">
+    </div>
+    
+    <div class="angle-value-display">
+        当前角度: <span id="angleValue">22.5</span>° 
+    </div>
+</div>
+
+
+                
+                <div class="formula-box">
+                    <div class="formula">σθ = (σₓ + σᵧ)/2 + (σₓ - σᵧ)/2 · cos2θ - τₓᵧ · sin2θ</div>
+                    <div class="formula">τθ = (σₓ - σᵧ)/2 · sin2θ + τₓᵧ · cos2θ</div>
+                </div>
+                
+                <div class="result-box">
+                    <h3 class="result-title"><i class="fas fa-chart-line"></i> 计算结果</h3>
+                    
+                    <div class="result-item">
+                        <span class="result-label">斜截面正应力 σθ:</span>
+                        <span class="result-value" id="sigmaTheta">0.00 MPa</span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <span class="result-label">斜截面切应力 τθ:</span>
+                        <span class="result-value" id="tauTheta">0.00 MPa</span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <span class="result-label">最大主应力 σmax:</span>
+                        <span class="result-value" id="sigmaMax">0.00 MPa</span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <span class="result-label">最小主应力 σmin:</span>
+                        <span class="result-value" id="sigmaMin">0.00 MPa</span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <span class="result-label">最大切应力 τmax:</span>
+                        <span class="result-value" id="tauMax">0.00 MPa</span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <span class="result-label">主方向角 θₚ:</span>
+                        <span class="result-value" id="thetaP">0.00 °</span>
+                    </div>
+                </div>
+                
+                <div class="mohr-circle-info">
+                    <strong>符号约定说明：</strong><br>
+                    • 单元体：θ逆时针为正，τ顺时针为正<br>
+                    • 莫尔圆：σ向右为正，τ向上为正<br>
+                    • Dx点：(σₓ, τₓᵧ)<br>
+                    • Dy点：(σᵧ, -τₓᵧ)<br>
+                    • D点：(σθ, τθ)
+                </div>
+            </div>
+            
+            <div class="visualization-section">
+                
+                <div class="visualization-container">
+                    <div class="visualization-item">
+                        <h3 class="visualization-title"><i class="fas fa-cube"></i> 单元体和斜截面</h3>
+                        <div class="canvas-container">
+                            <canvas id="stressCanvas" width="450" height="450"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="visualization-item">
+                        <h3 class="visualization-title"><i class="fas fa-circle"></i> 莫尔应力圆</h3>
+                        <div class="canvas-container">
+                            <canvas id="mohrCircleCanvas" width="450" height="450"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #e74c3c;"></div>
+                        <span>σₓ (X方向正应力)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #2ecc71;"></div>
+                        <span>σᵧ (Y方向正应力)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #3498db;"></div>
+                        <span>τₓᵧ (切应力)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #9b59b6;"></div>
+                        <span>斜截面应力 (σθ, τθ)</span>
+                    </div>
+                </div>
+                
+                <div class="calculation-steps">
+                    <h3 class="step-title"><i class="fas fa-list-ol"></i> 计算步骤</h3>
+                    <div class="calculation-step">
+                        <div class="step-title">1. 计算平均正应力</div>
+                        <div class="step-content" id="step1">σm = (σₓ + σᵧ)/2 = (80 - 40)/2 = 20.00 MPa</div>
+                    </div>
+                    <div class="calculation-step">
+                        <div class="step-title">2. 计算应力圆半径</div>
+                        <div class="step-content" id="step2">R = √[((σₓ-σᵧ)/2)² + τₓᵧ²] = √[((80-40)/2)² + (-60)²] = √[60² + (-60)²] = 84.85 MPa</div>
+                    </div>
+                    <div class="calculation-step">
+                        <div class="step-title">3. 计算斜截面正应力</div>
+                        <div class="step-content" id="step3">σθ = σm + (σₓ-σᵧ)/2·cos2θ - τₓᵧ·sin2θ = 20 + 60·cos45° - (-60)·sin45° = 20 + 42.43 + 42.43 = 104.85 MPa</div>
+                    </div>
+                    <div class="calculation-step">
+                        <div class="step-title">4. 计算斜截面切应力</div>
+                        <div class="step-content" id="step4">τθ = (σₓ-σᵧ)/2·sin2θ + τₓᵧ·cos2θ = 60·sin45° + (-60)·cos45° = 42.43 - 42.43 = 0.00 MPa</div>
+                    </div>
+                    <div class="calculation-step">
+                        <div class="step-title">5. 计算主应力</div>
+                        <div class="step-content" id="step5">σmax = σm + R = 20 + 84.85 = 104.85 MPa, σmin = σm - R = 20 - 84.85 = -64.85 MPa</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

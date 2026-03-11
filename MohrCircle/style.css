@@ -1,0 +1,486 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+header {
+    background: linear-gradient(135deg, #2c3e50, #4a6491);
+    color: white;
+    padding: 25px 30px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 2.4rem;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    font-weight: 300;
+}
+
+.content {
+    display: flex;
+    flex-wrap: wrap;
+    min-height: 700px;
+}
+
+.input-section {
+    flex: 0 0 350px;
+    padding: 25px;
+    background-color: #f9fafc;
+    border-right: 1px solid #eaeef5;
+}
+
+.visualization-section {
+    flex: 1;
+    min-width: 700px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+}
+
+.visualization-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.visualization-item {
+    flex: 1;
+    min-width: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.visualization-title {
+    font-size: 1.3rem;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #4a6491;
+    display: flex;
+    align-items: center;
+}
+
+.visualization-title i {
+    margin-right: 10px;
+    color: #4a6491;
+}
+
+.canvas-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 10px;
+}
+
+.section-title {
+    font-size: 1.6rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #4a6491;
+    display: flex;
+    align-items: center;
+}
+
+.section-title i {
+    margin-right: 12px;
+    color: #4a6491;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+
+.input-with-unit {
+    display: flex;
+    align-items: center;
+}
+
+.input-with-unit input {
+    flex: 1;
+    padding: 12px 14px;
+    border: 2px solid #dce1ec;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.input-with-unit input:focus {
+    border-color: #4a6491;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(74, 100, 145, 0.1);
+}
+
+.unit {
+    margin-left: 10px;
+    font-weight: 600;
+    color: #4a6491;
+    min-width: 40px;
+    font-size: 0.9rem;
+}
+
+.angle-control-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.angle-input {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.angle-input input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #dce1ec;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.angle-input input:focus {
+    border-color: #4a6491;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(74, 100, 145, 0.1);
+}
+
+.angle-btn-group {
+    display: flex;
+    gap: 6px;
+}
+
+.angle-btn {
+    width: 45px;
+    height: 45px;
+    background-color: #4a6491;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.angle-btn:hover {
+    background-color: #3a537a;
+}
+
+.angle-btn:active {
+    transform: scale(0.95);
+}
+
+.slider-container {
+    margin-top: 8px;
+}
+
+.slider-container input[type="range"] {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: #e0e0e0;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.slider-container input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #4a6491;
+    cursor: pointer;
+    border: 3px solid white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.result-box {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.result-title {
+    font-size: 1.2rem;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.result-title i {
+    margin-right: 8px;
+    color: #4a6491;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed #ced4da;
+}
+
+.result-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.result-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.result-value {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #2c3e50;
+}
+
+#stressCanvas, #mohrCircleCanvas {
+    background-color: white;
+    border-radius: 4px;
+    width: 100%;
+    height: 100%;
+}
+
+.legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 20px;
+    font-size: 0.85rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    border-radius: 4px;
+}
+
+.formula-box {
+    background-color: #f8f9fa;
+    border-left: 4px solid #4a6491;
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.9rem;
+}
+
+.formula {
+    font-size: 1rem;
+    font-family: 'Cambria Math', serif;
+    margin-bottom: 8px;
+}
+
+.info-text {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 12px;
+    text-align: center;
+}
+
+.angle-value-display {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #4a6491;
+    margin-top: 8px;
+}
+
+.mohr-circle-info {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 15px;
+    font-size: 0.85rem;
+    color: #666;
+    border-left: 4px solid #9b59b6;
+}
+
+.calculation-steps {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+    border-left: 4px solid #2ecc71;
+    font-size: 0.9rem;
+}
+
+.calculation-step {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dotted #ddd;
+}
+
+.calculation-step:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.step-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.step-content {
+    color: #666;
+    font-family: 'Consolas', 'Courier New', monospace;
+}
+
+@media (max-width: 1100px) {
+    .content {
+        flex-direction: column;
+    }
+    
+    .input-section {
+        flex: 1;
+        min-width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #eaeef5;
+    }
+    
+    .visualization-section {
+        min-width: 100%;
+    }
+    
+    .visualization-item {
+        min-width: 100%;
+    }
+}
+
+@media (max-width: 700px) {
+    .visualization-container {
+        flex-direction: column;
+    }
+    
+    .visualization-item {
+        min-width: 100%;
+    }
+    
+    header {
+        padding: 20px;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    .section-title {
+        font-size: 1.4rem;
+    }
+}
+
+
+
+/* 在原有的CSS文件末尾添加： */
+
+/* 预设按钮样式 */
+.preset-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 15px 0 10px 0;
+}
+
+.preset-btn {
+    flex: 1;
+    min-width: 60px;
+    padding: 10px 8px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.preset-btn:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.preset-btn:active {
+    transform: translateY(0);
+    background-color: #1f639b;
+}
+
+/* 预设按钮激活状态 */
+.preset-btn.active {
+    background-color: #2c3e50;
+    color: white;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 响应式调整 */
+@media (max-width: 700px) {
+    .preset-buttons {
+        gap: 6px;
+    }
+    
+    .preset-btn {
+        min-width: 50px;
+        padding: 8px 6px;
+        font-size: 0.85rem;
+    }
+}

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>材料力学 · 圆轴扭转</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background-color: #1a2634;
+            touch-action: none;
+        }
+
+        /* 底部固定面板 */
+        #bottom-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 160px;
+            background: #0f1a24;
+            border-top: 3px solid #3a6a9a;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.8);
+            z-index: 40;
+            display: flex;
+            flex-direction: column;
+            padding: 12px 16px 8px 16px;
+            box-sizing: border-box;
+            color: #e0ecff;
+            backdrop-filter: blur(10px);
+            background: rgba(15, 26, 36, 0.98);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .panel-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #b0d0ff;
+            letter-spacing: 0.5px;
+            border-left: 4px solid #ffaa66;
+            padding-left: 10px;
+        }
+        .angle-badge {
+            background: #1e3140;
+            padding: 4px 16px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            border: 1px solid #4a70a0;
+        }
+        .angle-badge span {
+            color: #ffaa66;
+            font-weight: 700;
+            margin-left: 8px;
+            font-family: monospace;
+        }
+
+        .sliders-container {
+            display: flex;
+            gap: 15px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .slider-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1a2938;
+            border-radius: 20px;
+            padding: 8px 12px 12px 12px;
+            border: 1px solid #2f4a66;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+        }
+        .slider-header .title {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .red-dot { color: #ff7799; font-weight: 600; }
+        .green-dot { color: #6fda8c; font-weight: 600; }
+        .blue-dot { color: #5a9eff; font-weight: 600; }
+
+        .value-badge {
+            background: #0f1a24;
+            padding: 3px 10px;
+            border-radius: 30px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: #ffaa66;
+            border: 1px solid #3a5f7a;
+        }
+
+        input[type=range] {
+            width: 100%;
+            height: 8px;
+            background: #2f4055;
+            border-radius: 10px;
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 8px 0 4px 0;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            background: #ffaa66;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px black;
+        }
+
+        .slider-footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: #90a8c0;
+            padding: 0 4px;
+        }
+
+        #canvas-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 160px;
+            z-index: 10;
+        }
+
+        #note {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: white;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            border: 1px solid #3a5f7a;
+            backdrop-filter: blur(5px);
+            z-index: 30;
+            pointer-events: none;
+        }
+        .note-highlight {
+            color: #ffaa66;
+        }
+        .ortho-hint {
+            position: absolute;
+            top: 70px;
+            left: 15px;
+            background: rgba(0,0,0,0.3);
+            color: #aaccff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            border: 1px solid #3a6a9a;
+            backdrop-filter: blur(4px);
+            z-index: 30;
+        }
+
+        @media (max-width: 500px) {
+            #bottom-panel {
+                height: 170px;
+                padding: 8px 10px;
+            }
+            #canvas-wrapper {
+                bottom: 170px;
+            }
+            .slider-header {
+                font-size: 0.75rem;
+            }
+            .value-badge {
+                font-size: 0.7rem;
+                padding: 2px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+
+
+    <div id="canvas-wrapper"></div>
+
+    <div id="bottom-panel">
+        <div class="panel-header">
+            <h3>⚙️ 参数调整</h3>
+            <div class="angle-badge">
+                当前转角 <span id="angle-display">0°</span>
+            </div>
+        </div>
+
+        <div class="sliders-container">
+            <div class="slider-item">
+                <div class="slider-header">
+                    <span class="title"><span class="blue-dot">🔵</span> 扭转角</span>
+                    <span id="angle-value" class="value-badge">0°</span>
+                </div>
+                <input type="range" id="angle-slider" min="0" max="60" value="0" step="1">
+                <div class="slider-footer">
+                    <span>0°</span>
+                    <span>60°</span>
+                </div>
+            </div>
+
+            <div class="slider-item">
+                <div class="slider-header">
+                    <span class="title"><span class="red-dot">🔴</span> 红色截面</span>
+                    <span id="red-slice-value" class="value-badge">-3.00</span>
+                </div>
+                <input type="range" id="red-slice-slider" min="-3.0" max="3.0" step="0.05" value="-3.0">
+                <div class="slider-footer">
+                    <span>左 -3.0</span>
+                    <span>右 3.0</span>
+                </div>
+            </div>
+
+            <div class="slider-item">
+                <div class="slider-header">
+                    <span class="title"><span class="green-dot">🟢</span> 绿色截面</span>
+                    <span id="green-slice-value" class="value-badge">3.00</span>
+                </div>
+                <input type="range" id="green-slice-slider" min="-3.0" max="3.0" step="0.05" value="3.0">
+                <div class="slider-footer">
+                    <span>左 -3.0</span>
+                    <span>右 3.0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // --- 初始化场景 ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a2634);
+
+        // ========== 正交相机 - 20度视角，保持截面等大 ==========
+        const panelHeight = 160;
+        const viewHeight = window.innerHeight - panelHeight;
+        const aspect = window.innerWidth / viewHeight;
+        
+        const frustumSize = 8.0;
+        
+        const camera = new THREE.OrthographicCamera(
+            frustumSize * aspect / -2,
+            frustumSize * aspect / 2,
+            frustumSize / 2,
+            frustumSize / -2,
+            0.1,
+            100
+        );
+        
+        // ===== 关键：绕Y轴旋转20度，但保持视线垂直于X轴方向 =====
+        // 原理：先将相机放在Z轴正方向 (0, 0, distance)，然后绕Y轴旋转20度
+        // 这样所有平行于YZ平面的截面（红色和绿色）仍然与视线方向垂直，确保大小一致
+        
+        const distance = 15;
+        const angle = 15 * Math.PI / 180; 
+        
+        // 绕Y轴旋转矩阵
+        const xPos = distance * Math.sin(angle);
+        const zPos = distance * Math.cos(angle);
+        
+        camera.position.set(xPos, 1, zPos); // Y=0 保持水平
+        camera.lookAt(0, 0, 0);
+        camera.up.set(0, 1, 0);
+        camera.updateProjectionMatrix();
+
+        // --- 渲染器 ---
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, viewHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('canvas-wrapper').appendChild(renderer.domElement);
+
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, viewHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.getElementById('canvas-wrapper').appendChild(labelRenderer.domElement);
+
+        // --- 控制器 (完全自由旋转) ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.screenSpacePanning = true;
+        controls.enableZoom = true;
+        controls.enablePan = true;
+        controls.panButton = 2;
+        controls.touchRotate = true;
+        controls.touchPan = true;
+        
+        // 无任何限制
+        controls.minPolarAngle = 0;
+        controls.maxPolarAngle = Math.PI;
+        controls.minAzimuthAngle = -Infinity;
+        controls.maxAzimuthAngle = Infinity;
+
+        // ========== 核心参数 ==========
+        const radius = 2.0;
+        const length = 6.0;
+        const halfL = 3.0;
+        const radialSegments = 32;
+        const axialSegments = 10;
+
+        // ========== 创建带网格线的蓝色圆轴 ==========
+        const baseGeo = new THREE.CylinderGeometry(radius, radius, length, radialSegments, axialSegments);
+        baseGeo.applyMatrix4(new THREE.Matrix4().makeRotationZ(-Math.PI / 2));
+        
+        const originalPositions = baseGeo.attributes.position.array.slice();
+        
+        const animGeo = new THREE.BufferGeometry();
+        animGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(originalPositions.length), 3));
+        animGeo.setIndex(baseGeo.index);
+        animGeo.setAttribute('normal', baseGeo.attributes.normal.clone());
+        
+        // 使用不受光照影响的材质
+        const material = new THREE.MeshBasicMaterial({
+            color: 0x3a7ca5,
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide
+        });
+        
+        const cylinder = new THREE.Mesh(animGeo, material);
+        scene.add(cylinder);
+
+        // 存储原始顶点
+        const vertexData = [];
+        for (let i = 0; i < originalPositions.length; i += 3) {
+            vertexData.push({
+                x: originalPositions[i],
+                y: originalPositions[i+1],
+                z: originalPositions[i+2]
+            });
+        }
+
+        // 纵向线
+        const longitudinalLines = [];
+        for (let i = 0; i <= radialSegments; i++) {
+            const points = [];
+            for (let j = 0; j <= axialSegments; j++) {
+                const idx = j * (radialSegments + 1) + i;
+                points.push(new THREE.Vector3(originalPositions[idx*3], originalPositions[idx*3+1], originalPositions[idx*3+2]));
+            }
+            const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color: 0xffffff }));
+            scene.add(line);
+            longitudinalLines.push(line);
+        }
+
+        // 横向线
+        const circumferentialLines = [];
+        for (let j = 0; j <= axialSegments; j++) {
+            const points = [];
+            for (let i = 0; i <= radialSegments; i++) {
+                const idx = j * (radialSegments + 1) + i;
+                points.push(new THREE.Vector3(originalPositions[idx*3], originalPositions[idx*3+1], originalPositions[idx*3+2]));
+            }
+            const firstIdx = j * (radialSegments + 1);
+            points.push(new THREE.Vector3(originalPositions[firstIdx*3], originalPositions[firstIdx*3+1], originalPositions[firstIdx*3+2]));
+            const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color: 0xffffff }));
+            scene.add(line);
+            circumferentialLines.push(line);
+        }
+
+        // ========== 创建切片 ==========
+        function createSlice(color) {
+            const ringSegments = 80;
+            const expand = 0.01;
+            const rings = [];
+            const expands = [0, expand, -expand];
+            for (let k = 0; k < 3; k++) {
+                const points = [];
+                for (let i = 0; i <= ringSegments; i++) {
+                    const angle = (i / ringSegments) * Math.PI * 2;
+                    const y = (radius + expands[k]) * Math.cos(angle);
+                    const z = (radius + expands[k]) * Math.sin(angle);
+                    points.push(new THREE.Vector3(0, y, z));
+                }
+                const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color }));
+                scene.add(line);
+                rings.push(line);
+            }
+            const diameters = [];
+            const numDiameters = 16;
+            for (let i = 0; i < numDiameters; i++) {
+                const angle = (i / numDiameters) * Math.PI * 2;
+                const y1 = radius * Math.cos(angle);
+                const z1 = radius * Math.sin(angle);
+                const y2 = -y1, z2 = -z1;
+                const perpY = -Math.sin(angle) * expand;
+                const perpZ = Math.cos(angle) * expand;
+                const lines = [];
+                for (let k = -1; k <= 1; k++) {
+                    const offsetY = perpY * k, offsetZ = perpZ * k;
+                    const points = [new THREE.Vector3(0, y1+offsetY, z1+offsetZ), new THREE.Vector3(0, y2+offsetY, z2+offsetZ)];
+                    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color }));
+                    scene.add(line);
+                    lines.push(line);
+                }
+                diameters.push({ lines, startY: y1, startZ: z1, endY: y2, endZ: z2, perpY, perpZ });
+            }
+            return { rings, diameters };
+        }
+
+        const redSlice = createSlice(0xff5577);
+        const greenSlice = createSlice(0x4fbf7f);
+
+        // ========== UI控制 ==========
+        const angleSlider = document.getElementById('angle-slider');
+        const angleValue = document.getElementById('angle-value');
+        const angleDisplay = document.getElementById('angle-display');
+        
+        const redSlider = document.getElementById('red-slice-slider');
+        const redValue = document.getElementById('red-slice-value');
+        const greenSlider = document.getElementById('green-slice-slider');
+        const greenValue = document.getElementById('green-slice-value');
+
+        let currentAngle = 0;
+        let redPos = -3.0;
+        let greenPos = 3.0;
+
+        angleSlider.addEventListener('input', (e) => {
+            currentAngle = parseFloat(e.target.value);
+            angleValue.textContent = currentAngle + '°';
+            angleDisplay.textContent = currentAngle + '°';
+        });
+        redSlider.addEventListener('input', (e) => {
+            redPos = parseFloat(e.target.value);
+            redValue.textContent = redPos.toFixed(2);
+        });
+        greenSlider.addEventListener('input', (e) => {
+            greenPos = parseFloat(e.target.value);
+            greenValue.textContent = greenPos.toFixed(2);
+        });
+
+        // ========== 动画更新 ==========
+        const positionArray = animGeo.attributes.position.array;
+        let currentAngleRad = 0;
+
+        function updateSlice(slice, pos) {
+            const t = (pos + halfL) / (2.0 * halfL);
+            const sliceAngle = currentAngleRad * Math.max(0, Math.min(1, t));
+            const cosS = Math.cos(sliceAngle), sinS = Math.sin(sliceAngle);
+            const expands = [0, 0.01, -0.01];
+            slice.rings.forEach((ring, idx) => {
+                const expand = expands[idx];
+                const points = [];
+                for (let i = 0; i <= 80; i++) {
+                    const angle = (i / 80) * Math.PI * 2;
+                    const y = (radius + expand) * Math.cos(angle);
+                    const z = (radius + expand) * Math.sin(angle);
+                    points.push(new THREE.Vector3(pos, y * cosS - z * sinS, y * sinS + z * cosS));
+                }
+                ring.geometry.dispose();
+                ring.geometry = new THREE.BufferGeometry().setFromPoints(points);
+            });
+            slice.diameters.forEach(dia => {
+                const baseStartY = dia.startY * cosS - dia.startZ * sinS;
+                const baseStartZ = dia.startY * sinS + dia.startZ * cosS;
+                const baseEndY = dia.endY * cosS - dia.endZ * sinS;
+                const baseEndZ = dia.endY * sinS + dia.endZ * cosS;
+                const perpY_rot = dia.perpY * cosS - dia.perpZ * sinS;
+                const perpZ_rot = dia.perpY * sinS + dia.perpZ * cosS;
+                dia.lines.forEach((line, idx) => {
+                    const offset = idx - 1;
+                    const points = [
+                        new THREE.Vector3(pos, baseStartY + perpY_rot * offset, baseStartZ + perpZ_rot * offset),
+                        new THREE.Vector3(pos, baseEndY + perpY_rot * offset, baseEndZ + perpZ_rot * offset)
+                    ];
+                    line.geometry.dispose();
+                    line.geometry = new THREE.BufferGeometry().setFromPoints(points);
+                });
+            });
+        }
+
+        function updateGeometry() {
+            currentAngleRad = currentAngle * Math.PI / 180;
+            for (let i = 0; i < vertexData.length; i++) {
+                const v = vertexData[i];
+                const x = v.x;
+                const t = (x + halfL) / (2.0 * halfL);
+                const twist = currentAngleRad * Math.max(0, Math.min(1, t));
+                const cosA = Math.cos(twist), sinA = Math.sin(twist);
+                positionArray[i*3] = x;
+                positionArray[i*3+1] = v.y * cosA - v.z * sinA;
+                positionArray[i*3+2] = v.y * sinA + v.z * cosA;
+            }
+            animGeo.attributes.position.needsUpdate = true;
+
+            // 更新网格线
+            for (let ri = 0; ri <= radialSegments; ri++) {
+                const points = [];
+                for (let aj = 0; aj <= axialSegments; aj++) {
+                    const idx = aj * (radialSegments + 1) + ri;
+                    points.push(new THREE.Vector3(positionArray[idx*3], positionArray[idx*3+1], positionArray[idx*3+2]));
+                }
+                longitudinalLines[ri].geometry.dispose();
+                longitudinalLines[ri].geometry = new THREE.BufferGeometry().setFromPoints(points);
+            }
+            for (let aj = 0; aj <= axialSegments; aj++) {
+                const points = [];
+                for (let ri = 0; ri <= radialSegments; ri++) {
+                    const idx = aj * (radialSegments + 1) + ri;
+                    points.push(new THREE.Vector3(positionArray[idx*3], positionArray[idx*3+1], positionArray[idx*3+2]));
+                }
+                const firstIdx = aj * (radialSegments + 1);
+                points.push(new THREE.Vector3(positionArray[firstIdx*3], positionArray[firstIdx*3+1], positionArray[firstIdx*3+2]));
+                circumferentialLines[aj].geometry.dispose();
+                circumferentialLines[aj].geometry = new THREE.BufferGeometry().setFromPoints(points);
+            }
+
+            updateSlice(redSlice, redPos);
+            updateSlice(greenSlice, greenPos);
+        }
+
+        function animate() {
+            updateGeometry();
+            controls.update();
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            const newHeight = window.innerHeight - panelHeight;
+            const newAspect = window.innerWidth / newHeight;
+            
+            camera.left = -frustumSize * newAspect / 2;
+            camera.right = frustumSize * newAspect / 2;
+            camera.top = frustumSize / 2;
+            camera.bottom = -frustumSize / 2;
+            camera.updateProjectionMatrix();
+            
+            renderer.setSize(window.innerWidth, newHeight);
+            labelRenderer.setSize(window.innerWidth, newHeight);
+        });
+    </script>
+</body>
+</html>
